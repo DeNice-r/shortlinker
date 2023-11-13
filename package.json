@@ -1,0 +1,28 @@
+{
+  "name": "aws-node-express-dynamodb-api-project",
+  "type": "commonjs",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Denys Kalinovskyi",
+  "license": "ISC",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "tsc -w",
+    "lint": "tslint '*.ts'"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.445.0",
+    "@aws-sdk/lib-dynamodb": "^3.445.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.126",
+    "@types/node": "^7.0.5",
+    "esbuild": "^0.19.5",
+    "serverless-esbuild": "^1.48.5",
+    "serverless-offline": "^13.2.1",
+    "tslint": "^5.5.0",
+    "tslint-config-standard": "^6.0.1",
+    "typescript": "^2.4.2"
+  }
+}

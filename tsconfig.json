@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "preserveConstEnums": true,
+    "strictNullChecks": true,
+    "sourceMap": true,
+    "allowJs": false,
+    "module": "commonjs",
+    "target": "ES6",
+    "outDir": ".build",
+    "esModuleInterop": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "lib": [
+      "ES6"
+    ],
+    "rootDir": "./"
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

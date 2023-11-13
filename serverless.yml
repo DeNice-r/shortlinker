@@ -1,0 +1,130 @@
+org: dncwhy
+app: shrtlnkr
+service: shortlinker
+frameworkVersion: '3'
+
+custom:
+  usersTableName: 'users-table-${sls:stage}'
+  linksTableName: 'links-table-${sls:stage}'
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    target: node18
+
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:FullAccess
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [ UsersTable, Arn ]
+            - Fn::GetAtt: [ LinksTable, Arn ]
+            # Add ability to use global secondary indexes of the tables
+            - Fn::Join: ['', [Fn::GetAtt: [UsersTable, Arn], '/*']]
+            - Fn::Join: ['', [Fn::GetAtt: [LinksTable, Arn], '/*']]
+  environment:
+    USERS_TABLE: ${self:custom.usersTableName}
+    LINKS_TABLE: ${self:custom.linksTableName}
+
+functions:
+  linksPut:
+    handler: src/links/put.handler
+    events:
+      - http:
+          path: /links
+          method: put
+          cors: true
+
+  linksRedirect:
+    handler: src/links/redirect.handler
+    events:
+      - http:
+          path: /{id}
+          method: get
+          cors: true
+
+  linksList:
+    handler: src/links/list.handler
+    events:
+      - http:
+          path: /links
+          method: get
+          cors: true
+
+  linksDeactivate:
+    handler: src/links/deactivate.handler
+    events:
+      - http:
+          path: /links/{id}
+          method: patch
+          cors: true
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+    # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UsersByEmail
+            KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.usersTableName}
+    LinksTable:
+      Type: AWS::DynamoDB::Table
+    # DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: expiresAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: LinksByUserId
+            KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: LinksByExpiresAt
+            KeySchema:
+            - AttributeName: expiresAt
+              KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.linksTableName}
+
+plugins:
+  - serverless-esbuild
+  - serverless-offline
