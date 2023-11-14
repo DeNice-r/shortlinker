@@ -1,6 +1,6 @@
 import { Handler } from 'aws-lambda'
 
-import { createDataResponse, createErrorResponse } from '../util/response'
+import { createDataResponse, createErrorResponse } from '../util/responses'
 import { queryByUserId } from '../util/links'
 
 export const handler: Handler = async (event) => {

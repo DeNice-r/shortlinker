@@ -1,6 +1,6 @@
 import { Handler } from 'aws-lambda'
 
-import { createErrorResponse, createRedirectResponse } from '../util/response'
+import { createErrorResponse, createRedirectResponse } from '../util/responses'
 import { get, deactivate, incrementVisitCount } from '../util/links'
 
 export const handler: Handler = async (event) => {

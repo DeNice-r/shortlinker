@@ -1,6 +1,6 @@
 import { Handler } from 'aws-lambda'
 
-import { createErrorResponse, createMessageResponse } from '../util/response'
+import { createErrorResponse, createMessageResponse } from '../util/responses'
 import { deactivate } from '../util/links'
 
 export const handler: Handler = async (event) => {

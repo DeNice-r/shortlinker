@@ -3,7 +3,7 @@ import { Handler } from 'aws-lambda'
 import { URL } from 'url'
 import crypto from 'crypto'
 
-import { createDataResponse, createErrorResponse } from '../util/response'
+import { createDataResponse, createErrorResponse } from '../util/responses'
 import { exists, put } from '../util/links'
 
 const MAX_TOKEN_GENERATION_TRY_COUNT = 5
