@@ -4,7 +4,7 @@ import { URL } from 'url'
 import crypto from 'crypto'
 
 import { createDataResponse, createErrorResponse } from '../util/responses'
-import { exists, put } from '../util/links'
+import { exists, put } from '../dynamodb/links'
 
 const MAX_TOKEN_GENERATION_TRY_COUNT = 5
 const ALLOWED_EXPIRATION_PERIODS_DAYS = [1, 3, 7]

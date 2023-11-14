@@ -1,7 +1,7 @@
 import { Handler } from 'aws-lambda'
 
 import { createDataResponse, createErrorResponse } from '../util/responses'
-import { queryByUserId } from '../util/links'
+import { queryByUserId } from '../dynamodb/links'
 
 export const handler: Handler = async (event) => {
     try {

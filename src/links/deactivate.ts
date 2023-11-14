@@ -1,7 +1,7 @@
 import { Handler } from 'aws-lambda'
 
 import { createErrorResponse, createMessageResponse } from '../util/responses'
-import { deactivate } from '../util/links'
+import { deactivate } from '../dynamodb/links'
 
 export const handler: Handler = async (event) => {
     try {
