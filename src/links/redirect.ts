@@ -25,7 +25,7 @@ async function deactivateIfExpired (link: any) {
     // but false is returned, as it should be treated as active until lambda execution ends
     const timestampMs = new Date().getTime()
     if (!link.expiresAt || link.expiresAt < timestampMs) {
-        await deactivate(link.id)
+        await deactivate(link.id, link.userId)
     }
     return link.expiresAt && link.expiresAt < timestampMs
 }
