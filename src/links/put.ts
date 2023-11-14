@@ -25,7 +25,7 @@ export const handler: Handler = async (event) => {
     if (daysToExpire && ALLOWED_EXPIRATION_PERIODS_DAYS.indexOf(daysToExpire) === -1) {
         return createErrorResponse(422,
             `Value ${daysToExpire} of daysToExpire is not allowed. Allowed values are:` +
-            `${ALLOWED_EXPIRATION_PERIODS_DAYS} or no value, which evaluates to a single-visit link.`)
+            `${ALLOWED_EXPIRATION_PERIODS_DAYS} or no value, which evaluates to a single-visit link`)
     }
 
     if (!origin || origin.host === event.requestContext.domainName) {
