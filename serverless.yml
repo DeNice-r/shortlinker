@@ -5,6 +5,7 @@ frameworkVersion: '3'
 
 custom:
   usersTableName: 'users-table-${sls:stage}'
+  tokensTableName: 'tokens-table-${sls:stage}'
   linksTableName: 'links-table-${sls:stage}'
   esbuild:
     bundle: true
@@ -30,52 +31,91 @@ provider:
             - dynamodb:DeleteItem
           Resource:
             - Fn::GetAtt: [ UsersTable, Arn ]
+            - Fn::GetAtt: [ TokensTable, Arn ]
             - Fn::GetAtt: [ LinksTable, Arn ]
             # Add ability to use global secondary indexes of the tables
-            - Fn::Join: ['', [Fn::GetAtt: [UsersTable, Arn], '/*']]
-            - Fn::Join: ['', [Fn::GetAtt: [LinksTable, Arn], '/*']]
+            - Fn::Join: [ '', [ Fn::GetAtt: [ UsersTable, Arn ], '/*' ] ]
+            - Fn::Join: [ '', [ Fn::GetAtt: [ TokensTable, Arn ], '/*' ] ]
+            - Fn::Join: [ '', [ Fn::GetAtt: [ LinksTable, Arn ], '/*' ] ]
+  httpApi:
+    authorizers:
+      jwtAuthorizer:
+        type: request
+        payloadVersion: "2.0"
+        enableSimpleResponses: true
+        identitySource:
+          - $request.header.Authorization  # Try to access it from event.authorizationToken
+        functionName: authorizer
+        resultTtlInSeconds: 300
+
   environment:
+    # DynamoDB table names
     USERS_TABLE: ${self:custom.usersTableName}
+    TOKENS_TABLE: ${self:custom.tokensTableName}
     LINKS_TABLE: ${self:custom.linksTableName}
 
+    # Auth-related variables
+    SALT_ROUNDS: 10
+    JWT_ACCESS_SECRET: secret1
+    JWT_REFRESH_SECRET: secret2
+    ACCESS_TOKEN_TTL_SECONDS: 3600 # 1 hour
+    REFRESH_TOKEN_TTL_SECONDS: 84000 # 1 day
+
+
 functions:
+  usersSignUp:
+    handler: src/auth/signUp.handler
+    events:
+      - httpApi:
+          path: /auth/sign-up
+          method: post
+  usersSignIn:
+    handler: src/auth/signIn.handler
+    events:
+      - httpApi:
+          path: /auth/sign-in
+          method: post
+  authorizer:
+    handler: src/auth/authorizer.handler
   linksPut:
     handler: src/links/put.handler
     events:
-      - http:
+      - httpApi:
           path: /links
           method: put
-          cors: true
+          authorizer:
+            name: jwtAuthorizer
 
   linksRedirect:
     handler: src/links/redirect.handler
     events:
-      - http:
+      - httpApi:
           path: /{id}
           method: get
-          cors: true
 
   linksList:
     handler: src/links/list.handler
     events:
-      - http:
+      - httpApi:
           path: /links
           method: get
-          cors: true
+          authorizer:
+            name: jwtAuthorizer
 
   linksDeactivate:
     handler: src/links/deactivate.handler
     events:
-      - http:
+      - httpApi:
           path: /links/{id}
           method: patch
-          cors: true
+          authorizer:
+            name: jwtAuthorizer
 
 resources:
   Resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
-    # DeletionPolicy: Retain
+      # DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
           - AttributeName: id
@@ -88,16 +128,46 @@ resources:
         GlobalSecondaryIndexes:
           - IndexName: UsersByEmail
             KeySchema:
-            - AttributeName: email
-              KeyType: HASH
+              - AttributeName: email
+                KeyType: HASH
             Projection:
               ProjectionType: ALL
 
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.usersTableName}
+
+    TokensTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: token
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: expiresAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: token
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: TokensByUserId
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - IndexName: TokensByExpiresAt
+            KeySchema:
+              - AttributeName: expiresAt
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.tokensTableName}
     LinksTable:
       Type: AWS::DynamoDB::Table
-    # DeletionPolicy: Retain
+      # DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
           - AttributeName: id
@@ -112,14 +182,14 @@ resources:
         GlobalSecondaryIndexes:
           - IndexName: LinksByUserId
             KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
+              - AttributeName: userId
+                KeyType: HASH
             Projection:
               ProjectionType: ALL
           - IndexName: LinksByExpiresAt
             KeySchema:
-            - AttributeName: expiresAt
-              KeyType: HASH
+              - AttributeName: expiresAt
+                KeyType: HASH
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST

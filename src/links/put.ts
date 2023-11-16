@@ -17,14 +17,14 @@ export const handler: Handler = async (event) => {
         return createErrorResponse(422, 'Request body unprocessable.')
     }
 
-    const userId = event.headers.userId
+    const user = event.requestContext.authorizer.lambda.user
     const daysToExpire = body.daysToExpire
     const urlString = body.url
     const origin = convertIfUrlValid(urlString)
 
     if (daysToExpire && ALLOWED_EXPIRATION_PERIODS_DAYS.indexOf(daysToExpire) === -1) {
         return createErrorResponse(422,
-            `Value ${daysToExpire} of daysToExpire is not allowed. Allowed values are:` +
+            `Value ${daysToExpire} of daysToExpire is not allowed. Allowed values are: ` +
             `${ALLOWED_EXPIRATION_PERIODS_DAYS} or no value, which evaluates to a single-visit link`)
     }
 
@@ -37,8 +37,12 @@ export const handler: Handler = async (event) => {
 
     try {
         const token = await generateUniqueToken()
-        await put(token, userId, origin.href, daysToExpire)
-        return createDataResponse({'shortLink': new URL(stage + '/' + token, host)})
+        await put(token, user.id, origin.href, daysToExpire)
+        return createDataResponse({
+            'linkId': token,
+            'link': new URL((stage !== '$default' ? stage + '/' : '') + token, host),
+            'origin': origin.href
+        })
     } catch (e) {
         console.error(e)
         return createErrorResponse(500, e.message)

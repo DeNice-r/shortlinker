@@ -1,4 +1,5 @@
 export function createResponse (statusCode: number, jsonBody: any, headers: any = {}) {
+    headers['Content-Type'] = 'application/json'
     return {
         statusCode,
         headers,
