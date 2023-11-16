@@ -63,19 +63,19 @@ provider:
 
 
 functions:
-  usersSignUp:
+  authSignUp:
     handler: src/auth/signUp.handler
     events:
       - httpApi:
           path: /auth/sign-up
           method: post
-  usersSignIn:
+  authSignIn:
     handler: src/auth/signIn.handler
     events:
       - httpApi:
           path: /auth/sign-in
           method: post
-  authorizer:
+  authAuthorizer:
     handler: src/auth/authorizer.handler
   linksPut:
     handler: src/links/put.handler
@@ -132,7 +132,6 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.usersTableName}
 
@@ -162,7 +161,6 @@ resources:
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
-
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:custom.tokensTableName}
     LinksTable:
