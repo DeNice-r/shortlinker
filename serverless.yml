@@ -29,6 +29,7 @@ provider:
             - dynamodb:PutItem
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
+            - dynamodb:DescribeLimits
           Resource:
             - Fn::GetAtt: [ UsersTable, Arn ]
             - Fn::GetAtt: [ TokensTable, Arn ]
@@ -114,7 +115,7 @@ functions:
 resources:
   Resources:
     UsersTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::DynamoDB::GlobalTable
       # DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
@@ -133,10 +134,15 @@ resources:
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Replicas:
+          - Region: us-east-1
+          - Region: eu-west-1
         TableName: ${self:custom.usersTableName}
 
     TokensTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::DynamoDB::GlobalTable
       Properties:
         AttributeDefinitions:
           - AttributeName: token
@@ -162,9 +168,14 @@ resources:
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Replicas:
+          - Region: us-east-1
+          - Region: eu-west-1
         TableName: ${self:custom.tokensTableName}
     LinksTable:
-      Type: AWS::DynamoDB::Table
+      Type: AWS::DynamoDB::GlobalTable
       # DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
@@ -191,6 +202,11 @@ resources:
             Projection:
               ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Replicas:
+          - Region: us-east-1
+          - Region: eu-west-1
         TableName: ${self:custom.linksTableName}
 
 plugins:
