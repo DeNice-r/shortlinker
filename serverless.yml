@@ -197,4 +197,3 @@ resources:
 
 plugins:
   - serverless-esbuild
-  - serverless-offline
