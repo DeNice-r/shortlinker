@@ -44,7 +44,7 @@ provider:
         payloadVersion: "2.0"
         enableSimpleResponses: true
         identitySource:
-          - $request.header.Authorization  # Try to access it from event.authorizationToken
+          - $request.header.Authorization
         functionName: authorizer
         resultTtlInSeconds: 300
 
