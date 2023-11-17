@@ -4,11 +4,6 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
 const TOKENS_TABLE = process.env.TOKENS_TABLE || ''
 
-type TokenData = {
-    id: string,
-    exp: string
-}
-
 export async function put (token: string, data: any) {
     const putOptions = {
         'TableName': TOKENS_TABLE,
