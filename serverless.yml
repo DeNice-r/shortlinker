@@ -152,8 +152,6 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: expiresAt
-            AttributeType: N
         KeySchema:
           - AttributeName: token
             KeyType: HASH
@@ -161,12 +159,6 @@ resources:
           - IndexName: TokensByUserId
             KeySchema:
               - AttributeName: userId
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-          - IndexName: TokensByExpiresAt
-            KeySchema:
-              - AttributeName: expiresAt
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
