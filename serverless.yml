@@ -46,7 +46,7 @@ provider:
         enableSimpleResponses: true
         identitySource:
           - $request.header.Authorization
-        functionName: authorizer
+        functionName: authAuthorizer
         resultTtlInSeconds: 300
 
   environment:
