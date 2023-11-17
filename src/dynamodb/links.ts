@@ -3,10 +3,9 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import { log } from 'util'
 
+const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
 const LINKS_TABLE = process.env.LINKS_TABLE || ''
 const TIME_IN_A_DAY_MS = 1000 * 60 * 60 * 24
-
-const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
 
 export async function put (token: string, userId: string, origin: string, daysToExpire: number) {
     const timestampMs = new Date().getTime()
