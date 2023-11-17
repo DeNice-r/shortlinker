@@ -62,6 +62,9 @@ provider:
     ACCESS_TOKEN_TTL_SECONDS: 3600 # 1 hour
     REFRESH_TOKEN_TTL_SECONDS: 84000 # 1 day
 
+    # Links-related variables
+    LINK_TOKEN_LENGTH: 6
+
 
 functions:
   authSignUp:

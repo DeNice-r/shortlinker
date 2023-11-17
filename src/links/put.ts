@@ -8,6 +8,7 @@ import { exists, put } from '../dynamodb/links'
 
 const MAX_TOKEN_GENERATION_TRY_COUNT = 5
 const ALLOWED_EXPIRATION_PERIODS_DAYS = [1, 3, 7]
+const LINK_TOKEN_LENGTH = +(process.env.LINK_TOKEN_LENGTH || 6)
 
 export const handler: Handler = async (event) => {
     let body: any
@@ -71,11 +72,11 @@ async function generateUniqueToken () {
     return token
 }
 
-function generateToken () {
+function generateToken (length: number = LINK_TOKEN_LENGTH) {
     return crypto
-        .randomBytes(4)  // Generate 4 random bytes
-        .toString('base64')  // Convert to base64 encoded string, which results in almost-always 6 data symbols and '=='
-        .slice(0, -2)  // Truncate the string to remove useless '==', possibly along with 7-th symbol, ruling out possible inconsistency among generated tokens
-        .replace(/\//g, '_')  // Replace + and / with url-friendly - and _
-        .replace(/\+/g, '-')
+    .randomBytes(Math.ceil(length * 3 / 4))  // Base64 symbol encodes 6/8 of a single byte, so there should be n * 6/8 bytes, which simplifies to the used expression
+    .toString('base64')  // Convert to base64 encoded string, which results in almost-always N data symbols and a number of '='
+    .slice(0, length)  // Truncate the string to remove useless '=', possibly along with spare symbols, ruling out possible inconsistency among generated tokens
+    .replace(/\//g, '_')  // Replace '+'' and '/' with url-friendly '-' and '_'
+    .replace(/\+/g, '-')
 }
