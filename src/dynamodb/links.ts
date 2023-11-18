@@ -52,8 +52,8 @@ export async function exists (linkId: string) {
     return Boolean(await get(linkId))
 }
 
-export async function zeroTrustDeactivate (linkId: string, userId: string = '') {
-    let deactivateParams = {
+export async function zeroTrustDeactivate (linkId: string, userId: string) {
+    const deactivateParams = {
         TableName: LINKS_TABLE,
         Key: {
             id: linkId
@@ -72,7 +72,7 @@ export async function zeroTrustDeactivate (linkId: string, userId: string = '') 
 }
 
 export async function deactivate (linkId: string) {
-    let deactivateParams = {
+    const deactivateParams = {
         TableName: LINKS_TABLE,
         Key: {
             id: linkId
