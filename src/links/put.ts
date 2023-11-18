@@ -1,10 +1,13 @@
 import { Handler } from 'aws-lambda'
+import { CreateScheduleCommand, SchedulerClient } from '@aws-sdk/client-scheduler'
 
 import { URL } from 'url'
 import crypto from 'crypto'
 
 import { createDataResponse, createErrorResponse } from '../util/responses'
 import { exists, put } from '../dynamodb/links'
+
+const schedulerClient = new SchedulerClient()
 
 const MAX_TOKEN_GENERATION_TRY_COUNT = 5
 const ALLOWED_EXPIRATION_PERIODS_DAYS = [1, 3, 7]
@@ -38,7 +41,8 @@ export const handler: Handler = async (event) => {
 
     try {
         const token = await generateUniqueToken()
-        await put(token, user.id, origin.href, daysToExpire)
+        const link: any = await put(token, user.id, origin.href, daysToExpire)
+        if (link.expiresAt) await scheduleDeactivation(link.id, link.expiresAt)
         return createDataResponse({
             'linkId': token,
             'link': new URL((stage !== '$default' ? stage + '/' : '') + token, host),
@@ -74,9 +78,31 @@ async function generateUniqueToken () {
 
 function generateToken (length: number = LINK_TOKEN_LENGTH) {
     return crypto
-    .randomBytes(Math.ceil(length * 3 / 4))  // Base64 symbol encodes 6/8 of a single byte, so there should be n * 6/8 bytes, which simplifies to the used expression
-    .toString('base64')  // Convert to base64 encoded string, which results in almost-always N data symbols and a number of '='
-    .slice(0, length)  // Truncate the string to remove useless '=', possibly along with spare symbols, ruling out possible inconsistency among generated tokens
-    .replace(/\//g, '_')  // Replace '+'' and '/' with url-friendly '-' and '_'
-    .replace(/\+/g, '-')
+        .randomBytes(Math.ceil(length * 3 / 4))  // Base64 symbol encodes 6/8 of a single byte, so there should be n * 6/8 bytes, which simplifies to the used expression
+        .toString('base64')  // Convert to base64 encoded string, which results in almost-always N data symbols and a number of '='
+        .slice(0, length)  // Truncate the string to remove useless '=', possibly along with spare symbols, ruling out possible inconsistency among generated tokens
+        .replace(/\//g, '_')  // Replace '+'' and '/' with url-friendly '-' and '_'
+        .replace(/\+/g, '-')
+}
+
+async function scheduleDeactivation (linkId: string, expiresAt: number) {
+    const IAM_ROLE_ARN = process.env.IAM_EXECUTION_ROLE_ARN
+    const CRON_DEACTIVATE_FUNCTION_ARN = process.env.CRON_DEACTIVATE_FUNCTION_ARN
+
+    const scheduleCommand = new CreateScheduleCommand({
+        Name: `${linkId}-deactivation`,
+        ScheduleExpression: `at(${(new Date(expiresAt * 1000)).toISOString().substring(0, 19)})`,
+        ScheduleExpressionTimezone: 'UTC',
+        Target: {
+            RoleArn: IAM_ROLE_ARN,
+            Arn: CRON_DEACTIVATE_FUNCTION_ARN,
+            Input: JSON.stringify({linkId})
+        },
+        FlexibleTimeWindow: {
+            Mode: 'OFF'
+        },
+        ActionAfterCompletion: 'DELETE'
+    })
+
+    return (await schedulerClient.send(scheduleCommand)).ScheduleArn
 }

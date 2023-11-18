@@ -5,10 +5,11 @@ import { log } from 'util'
 
 const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
 const LINKS_TABLE = process.env.LINKS_TABLE || ''
-const TIME_IN_A_DAY_MS = 1000 * 60 * 60 * 24
+const TIME_IN_A_DAY_S = 60 * 60 * 24
 
 export async function put (token: string, userId: string, origin: string, daysToExpire: number) {
-    const timestampMs = new Date().getTime()
+    const createdAt = Math.floor(new Date().getTime() / 1000)
+    const expiresAt = daysToExpire ? createdAt + daysToExpire * TIME_IN_A_DAY_S : undefined
     const putOptions = {
         'TableName': LINKS_TABLE,
         'Item': {
@@ -17,11 +18,12 @@ export async function put (token: string, userId: string, origin: string, daysTo
             'origin': origin,
             'isActive': 1,
             'visitCount': 0,
-            'createdAt': timestampMs,
-            'expiresAt': daysToExpire ? timestampMs + TIME_IN_A_DAY_MS * daysToExpire : undefined
+            createdAt,
+            expiresAt
         }
     }
-    return (await ddbDoc.put(putOptions)).ConsumedCapacity
+    await ddbDoc.put(putOptions)
+    return putOptions.Item
 }
 
 export async function queryByUserId (userId: string) {
@@ -50,24 +52,41 @@ export async function exists (linkId: string) {
     return Boolean(await get(linkId))
 }
 
-export async function deactivate (linkId: string, userId: string = '') {
-    const deactivateParams = {
+export async function zeroTrustDeactivate (linkId: string, userId: string = '') {
+    let deactivateParams = {
         TableName: LINKS_TABLE,
         Key: {
             id: linkId
         },
         UpdateExpression: 'set isActive = :isActive',
-        ConditionExpression: 'isActive = :one' + (userId ? ' AND userId = :userId' : ''),
+        ConditionExpression: 'isActive = :one AND userId = :userId',
         ExpressionAttributeValues: {
             ':isActive': 0,
-            ':userId': userId,
+            ':one': 1,
+            ':userId': userId
+        },
+        ReturnValues: 'ALL_NEW'
+    }
+
+    return (await ddbDoc.update(deactivateParams)).Item
+}
+
+export async function deactivate (linkId: string) {
+    let deactivateParams = {
+        TableName: LINKS_TABLE,
+        Key: {
+            id: linkId
+        },
+        UpdateExpression: 'set isActive = :isActive',
+        ConditionExpression: 'isActive = :one',
+        ExpressionAttributeValues: {
+            ':isActive': 0,
             ':one': 1
         },
         ReturnValues: 'ALL_NEW'
     }
-    const r = await ddbDoc.update(deactivateParams)
-    log(r)
-    return (r).Item
+
+    return (await ddbDoc.update(deactivateParams)).Item
 }
 
 export async function incrementVisitCount (linkId: string) {

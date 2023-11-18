@@ -17,12 +17,13 @@ custom:
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:FullAccess
             - dynamodb:Query
             - dynamodb:Scan
             - dynamodb:GetItem
@@ -38,6 +39,19 @@ provider:
             - Fn::Join: [ '', [ Fn::GetAtt: [ UsersTable, Arn ], '/*' ] ]
             - Fn::Join: [ '', [ Fn::GetAtt: [ TokensTable, Arn ], '/*' ] ]
             - Fn::Join: [ '', [ Fn::GetAtt: [ LinksTable, Arn ], '/*' ] ]
+
+        - Effect: Allow
+          Action:
+            - scheduler:CreateSchedule
+            - iam:PassRole
+          Resource: '*'
+
+        - Effect: Allow
+          Action:
+            - sts:AssumeRole
+          Resource:
+            - !GetAtt ExecutionRole.Arn
+
   httpApi:
     authorizers:
       jwtAuthorizer:
@@ -65,6 +79,8 @@ provider:
     # Links-related variables
     LINK_TOKEN_LENGTH: 6
 
+    IAM_EXECUTION_ROLE_ARN: !GetAtt ExecutionRole.Arn
+    CRON_DEACTIVATE_FUNCTION_ARN: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate
 
 functions:
   authSignUp:
@@ -114,6 +130,9 @@ functions:
           method: patch
           authorizer:
             name: jwtAuthorizer
+
+  linksCronDeactivate:
+    handler: src/links/cronDeactivate.handler
 
 resources:
   Resources:
@@ -206,6 +225,32 @@ resources:
           - Region: us-east-1
           - Region: eu-west-1
         TableName: ${self:custom.linksTableName}
+
+    ExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:service}-${self:provider.stage}-${self:provider.region}-executionRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - scheduler.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        # Without this policy, the function won't ever run, and no errors will be thrown by the schedule or the scheduler
+        Policies:
+          - PolicyName: ${self:service}-${self:provider.stage}-${self:provider.region}-executionPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                  Resource:
+                    - !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate
+                    - !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate:*
 
 plugins:
   - serverless-esbuild
