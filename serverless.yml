@@ -7,6 +7,10 @@ custom:
   usersTableName: 'users-table-${sls:stage}'
   tokensTableName: 'tokens-table-${sls:stage}'
   linksTableName: 'links-table-${sls:stage}'
+
+  # AWS will send an email to this address to verify it during the deployment
+  verifiedEmail: 'user@company.com'
+
   esbuild:
     bundle: true
     minify: true
@@ -44,6 +48,12 @@ provider:
           Action:
             - scheduler:CreateSchedule
             - iam:PassRole
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - ses:SendEmail
+            - ses:SendRawEmail
           Resource: '*'
 
         - Effect: Allow
@@ -64,6 +74,8 @@ provider:
         resultTtlInSeconds: 300
 
   environment:
+    MAIN_REGION: ${self:provider.region}
+
     # DynamoDB table names
     USERS_TABLE: ${self:custom.usersTableName}
     TOKENS_TABLE: ${self:custom.tokensTableName}
@@ -82,6 +94,12 @@ provider:
     IAM_EXECUTION_ROLE_ARN: !GetAtt ExecutionRole.Arn
     CRON_DEACTIVATE_FUNCTION_ARN: !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate
 
+    # SES-related variables
+    VERIFIED_EMAIL: ${self:custom.verifiedEmail}
+
+    # SQS-related variables
+    DEACTIVATION_MAIL_QUEUE_URL: !Ref DeactivationMailQueue
+
 functions:
   authSignUp:
     handler: src/auth/signUp.handler
@@ -89,6 +107,7 @@ functions:
       - httpApi:
           path: /auth/sign-up
           method: post
+
   authSignIn:
     handler: src/auth/signIn.handler
     events:
@@ -97,6 +116,7 @@ functions:
           method: post
   authAuthorizer:
     handler: src/auth/authorizer.handler
+
   linksPut:
     handler: src/links/put.handler
     events:
@@ -133,6 +153,15 @@ functions:
 
   linksCronDeactivate:
     handler: src/links/cronDeactivate.handler
+
+  emailsSendDeactivationNotification:
+    handler: src/emails/sendEmails.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ DeactivationMailQueue, Arn ]
+          batchSize: 10
+          maximumBatchingWindow: 300
 
 resources:
   Resources:
@@ -251,6 +280,18 @@ resources:
                   Resource:
                     - !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate
                     - !Sub arn:aws:lambda:${self:provider.region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-linksCronDeactivate:*
+
+    DeactivationMailQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${self:provider.stage}-deactivationMailQueue
+        VisibilityTimeout: 600
+        MessageRetentionPeriod: 86400
+
+    DeactivationNotificationEmailIdentity:
+      Type: AWS::SES::EmailIdentity
+      Properties:
+        EmailIdentity: ${self:custom.verifiedEmail}
 
 plugins:
   - serverless-esbuild

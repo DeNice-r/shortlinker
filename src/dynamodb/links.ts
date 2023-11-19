@@ -1,9 +1,10 @@
 import * as process from 'process'
 import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
-import { log } from 'util'
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
 
 const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
+const sqs = new SQSClient({})
 const LINKS_TABLE = process.env.LINKS_TABLE || ''
 const TIME_IN_A_DAY_S = 60 * 60 * 24
 
@@ -68,7 +69,10 @@ export async function zeroTrustDeactivate (linkId: string, userId: string) {
         ReturnValues: 'ALL_NEW'
     }
 
-    return (await ddbDoc.update(deactivateParams)).Item
+    const updatedLink = (await ddbDoc.update(deactivateParams)).Item
+    await sendSQSMessage(updatedLink.userId, updatedLink.origin)
+
+    return
 }
 
 export async function deactivate (linkId: string) {
@@ -86,7 +90,10 @@ export async function deactivate (linkId: string) {
         ReturnValues: 'ALL_NEW'
     }
 
-    return (await ddbDoc.update(deactivateParams)).Item
+    const updatedLink = (await ddbDoc.update(deactivateParams)).Attributes
+    await sendSQSMessage(updatedLink.userId, updatedLink.origin)
+
+    return updatedLink
 }
 
 export async function incrementVisitCount (linkId: string) {
@@ -103,4 +110,23 @@ export async function incrementVisitCount (linkId: string) {
         ReturnValues: 'ALL_NEW'
     }
     return (await ddbDoc.update(incrementVisitCountParams)).Item
+}
+
+async function sendSQSMessage (userId: string, origin: string) {
+    const DEACTIVATION_MAIL_QUEUE_URL = process.env.DEACTIVATION_MAIL_QUEUE_URL || ''
+    const message = {
+        userId,
+        origin
+    }
+
+    const command = new SendMessageCommand({
+        QueueUrl: DEACTIVATION_MAIL_QUEUE_URL,
+        MessageBody: JSON.stringify(message)
+    })
+
+    try {
+        await sqs.send(command)
+    } catch (e) {
+        console.error(e)
+    }
 }
