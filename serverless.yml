@@ -31,6 +31,18 @@ provider:
   runtime: nodejs18.x
   stage: dev
   region: us-east-1
+
+#  customDomain:
+#    domainName: serverless.foo.com
+#    stage: ci
+#    basePath: api
+#    certificateName: '*.foo.com'
+#    createRoute53Record: true
+#    endpointType: 'regional'
+#    securityPolicy: tls_1_2
+#    route53Params:
+#      routingPolicy: latency
+
   iam:
     role:
       statements:
@@ -310,3 +322,4 @@ resources:
 plugins:
   - serverless-esbuild
   - serverless-openapi-documenter
+#  - serverless-domain-manager

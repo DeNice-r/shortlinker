@@ -28,6 +28,7 @@
     "@types/node": "^7.0.5",
     "@types/uuid": "^9.0.7",
     "esbuild": "^0.19.5",
+    "serverless-domain-manager": "^7.1.2",
     "serverless-esbuild": "^1.48.5",
     "serverless-openapi-documenter": "^0.0.90",
     "tslint": "^5.5.0",
