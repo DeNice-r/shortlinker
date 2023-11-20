@@ -1,4 +1,4 @@
-import { ScheduledEvent, ScheduledHandler } from 'aws-lambda'
+import { ScheduledHandler } from 'aws-lambda'
 import { deactivate } from '../dynamodb/links'
 
 export const handler: ScheduledHandler = async (event: any) => {

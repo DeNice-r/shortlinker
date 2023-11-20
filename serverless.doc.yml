@@ -194,7 +194,7 @@ endpoints:
     summary: "Shorten URL"
     description: "Shorten URL function, which creates a new link and returns link id, origin and short link"
     security:
-      - jwtAuthorizer: []
+      - jwtAuthorizer: [ ]
     requestBody:
       description: "Shorten URL request body"
       required: true
@@ -222,45 +222,45 @@ endpoints:
         responseModels:
           "application/json": "ErrorResponse"
 
-# Redirection is not a valid OpenAPI operation (since the rule that every operation must have a 200 response is violated)
-# And analogs of this app never include redirection in their API documentation, so I decided to omit it
-#
-#  linksRedirect:
-#    summary: "Redirect to original URL"
-#    description: "Redirect to original URL function, which redirects to original URL"
-#    pathParams:
-#      - name: "id"
-#        description: "Id of a previously shortened link"
-#        required: true
-#        schema:
-#          type: "string"
-#    methodResponses:
-#      - statusCode: 302
-#        description: "Redirect to original URL"
-#        responseBody:
-#            description: "Original URL response body"
-#        responseModels: {}
-#        headers:
-#          Location:
-#            description: "Original URL"
-#            type: "string"
-#            example: "https://www.example.com/"
-#      - statusCode: 404
-#        responseBody:
-#          description: "Link not found"
-#        responseModels:
-#          "application/json": "ErrorResponse"
-#      - statusCode: 500
-#        responseBody:
-#          description: "Internal server error"
-#        responseModels:
-#          "application/json": "ErrorResponse"
+  # Redirection is not a valid OpenAPI operation (since the rule that every operation must have a 200 response is violated)
+  # And analogs of this app never include redirection in their API documentation, so I decided to omit it
+  #
+  #  linksRedirect:
+  #    summary: "Redirect to original URL"
+  #    description: "Redirect to original URL function, which redirects to original URL"
+  #    pathParams:
+  #      - name: "id"
+  #        description: "Id of a previously shortened link"
+  #        required: true
+  #        schema:
+  #          type: "string"
+  #    methodResponses:
+  #      - statusCode: 302
+  #        description: "Redirect to original URL"
+  #        responseBody:
+  #            description: "Original URL response body"
+  #        responseModels: {}
+  #        headers:
+  #          Location:
+  #            description: "Original URL"
+  #            type: "string"
+  #            example: "https://www.example.com/"
+  #      - statusCode: 404
+  #        responseBody:
+  #          description: "Link not found"
+  #        responseModels:
+  #          "application/json": "ErrorResponse"
+  #      - statusCode: 500
+  #        responseBody:
+  #          description: "Internal server error"
+  #        responseModels:
+  #          "application/json": "ErrorResponse"
 
   linksList:
     summary: "Get the list of your links"
     description: "Get all links function, which returns all links the user has created"
     security:
-      - jwtAuthorizer: []
+      - jwtAuthorizer: [ ]
     methodResponses:
       - statusCode: 200
         responseBody:
@@ -282,7 +282,7 @@ endpoints:
     summary: "Deactivate link"
     description: "Deactivate link function, which deactivates a link you have created"
     security:
-      - jwtAuthorizer: []
+      - jwtAuthorizer: [ ]
     pathParams:
       - name: "id"
         description: "Id of a previously shortened link"

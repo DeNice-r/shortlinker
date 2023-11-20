@@ -32,22 +32,18 @@ async function sendEmail (email: string, origin: string) {
     const sendCommand = new SendEmailCommand({
         Destination: {
             ToAddresses: [email]
-        },
-        Content: {
+        }, Content: {
             Simple: {
                 Body: {
                     Html: {
                         Charset: 'UTF-8',
                         Data: `<html><body><h1>Hi ${email}</h1><p>Your <a href="${origin}">shortened link</a> has been deactivated.</p></body></html>`
                     }
-                },
-                Subject: {
-                    Charset: 'UTF-8',
-                    Data: 'One of your links has been deactivated.'
+                }, Subject: {
+                    Charset: 'UTF-8', Data: 'One of your links has been deactivated.'
                 }
             }
-        },
-        FromEmailAddress: VERIFIED_EMAIL
+        }, FromEmailAddress: VERIFIED_EMAIL
     })
 
     try {

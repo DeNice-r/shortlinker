@@ -1,11 +1,10 @@
 {
-  "name": "aws-node-express-dynamodb-api-project",
+  "name": "shortlinker",
   "type": "commonjs",
   "version": "1.0.0",
   "description": "",
   "author": "Denys Kalinovskyi",
   "license": "ISC",
-  "main": "src/index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "tsc -w",

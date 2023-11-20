@@ -29,10 +29,6 @@ export const handler: Handler = async (event) => {
         // Token cannot be verified so it is deleted from the database
         console.error(e)
         await deleteToken(accessToken)
-        if (e instanceof jwt.TokenExpiredError) {
-            // return createErrorResponse(401, 'Token expired')
-        }
         return {'isAuthorized': false}
-        // return createErrorResponse(500, 'Internal server error')
     }
 }

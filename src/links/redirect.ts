@@ -1,7 +1,7 @@
 import { Handler } from 'aws-lambda'
 
 import { createErrorResponse, createRedirectResponse } from '../util/responses'
-import { get, zeroTrustDeactivate, incrementVisitCount } from '../dynamodb/links'
+import { get, incrementVisitCount, zeroTrustDeactivate } from '../dynamodb/links'
 
 export const handler: Handler = async (event) => {
     const linkId = event.pathParameters.id

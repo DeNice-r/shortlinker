@@ -1,7 +1,7 @@
 import * as process from 'process'
 import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
-import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs'
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 
 const ddbDoc = DynamoDBDocument.from(new DynamoDB({}))
 const sqs = new SQSClient({})

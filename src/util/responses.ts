@@ -1,9 +1,7 @@
 export function createResponse (statusCode: number, jsonBody: any, headers: any = {}) {
     headers['Content-Type'] = 'application/json'
     return {
-        statusCode,
-        headers,
-        'body': JSON.stringify(jsonBody)
+        statusCode, headers, 'body': JSON.stringify(jsonBody)
     }
 }
 
@@ -26,5 +24,5 @@ export function createDataResponse (data: any) {
 }
 
 export function createRedirectResponse (url: string) {
-    return createResponse(302, null, { Location: url })
+    return createResponse(302, null, {Location: url})
 }

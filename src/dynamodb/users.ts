@@ -53,6 +53,7 @@ export async function existsByEmail (email: string) {
 
 export class EmailTakenError extends Error {
     statusCode: number
+
     constructor (message: string = 'Email taken') {
         super(message)
         this.name = 'EmailTakenError'
