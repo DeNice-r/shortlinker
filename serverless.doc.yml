@@ -1,0 +1,312 @@
+documentation:
+  version: "1.0.0"
+  title: "Shortlinker"
+  description: "Serverless URL Shortener API"
+  securitySchemes:
+    jwtAuthorizer:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      description: "JWT authorization token (also referred to as access token)"
+  models:
+    - name: "ErrorResponse"
+      description: "This is an error"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        properties:
+          message:
+            type: "string"
+            example: "Hopefully meaningful error message"
+
+    - name: "AuthRequest"
+      description: "This is an auth request, used for sign-up and sign-in"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        required:
+          - email
+          - password
+        properties:
+          email:
+            type: "string"
+            example: "user@example.com"
+          password:
+            type: "string"
+            example: "PWrkXdn6fB8e"
+
+    - name: "AuthResponse"
+      description: "This is an auth response, returned from sign-up and sign-in"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        properties:
+          data:
+            type: "object"
+            properties:
+              id:
+                type: "string"
+                example: "82bf1932-4ac0-43f2-8173-15a3200650cc"
+              accessToken:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgyYmYxOTMyLTRhYzAtNDNmMi04MTczLTE1YTMyMDA2NTBjYyIsImlhdCI6MTcwMDQwNzA3MywiZXhwIjoxNzAwNDEwNjczfQ.rJ_DCPt5H2P-PgOapfm8gZUKsmhUbxVvAvCI0cRvuiQ"
+              refreshToken:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgyYmYxOTMyLTRhYzAtNDNmMi04MTczLTE1YTMyMDA2NTBjYyIsImlhdCI6MTcwMDQwNzA3MywiZXhwIjoxNzAwNDkxMDczfQ.zJ1oqdZ01Hpwq9rdd7kCbCjpGsAUGEJpc9SAYuCYTtg"
+
+    - name: "ShortenRequest"
+      description: "This is a shorten request, used to shorten a URL"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        required:
+          - url
+        properties:
+          url:
+            type: "string"
+            example: "https://www.example.com"
+          daysToExpire:
+            type: "integer"
+            enum: [ 1, 3, 7 ]
+
+    - name: "ShortenResponse"
+      description: "This is a shorten response, returned from shortening a URL"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        properties:
+          data:
+            type: "object"
+            properties:
+              linkId:
+                type: "string"
+                example: "Ab01-_"
+              origin:
+                type: "string"
+                example: "https://www.example.com"
+              link:
+                type: "string"
+                example: "https://shortlinker.com/Ab01-_"
+
+    - name: "GetLinksResponse"
+      description: "This is a get links response, returned from getting all links the user has created"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        properties:
+          data:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                id:
+                  type: "string"
+                  example: "Ab01-_"
+                visitCount:
+                  type: "integer"
+                  example: 27
+                userId:
+                  type: "string"
+                  example: "82bf1932-4ac0-43f2-8173-15a3200650cc"
+                origin:
+                  type: "string"
+                  example: "https://www.example.com"
+                isActive:
+                  type: "integer"
+                  example: 1
+                createdAt:
+                  type: "string"
+                  example: "2021-07-11T12:00:00.000Z"
+                expiresAt:
+                  type: "string"
+                  example: "2021-07-18T12:00:00.000Z"
+
+    - name: "DeactivateLinkResponse"
+      description: "This is a deactivate link response, returned from deactivating a link"
+      contentType: "application/json"
+      schema:
+        $schema: "http://json-schema.org/draft-04/schema#"
+        properties:
+          data:
+            type: "object"
+            properties:
+              message:
+                type: "string"
+                example: "Link deactivated successfully"
+
+endpoints:
+  authSignUp:
+    summary: "Sign up"
+    description: "Sign up function, which creates a new user and returns user id, access and refresh tokens"
+    requestBody:
+      description: "Sign up request body"
+      required: true
+    requestModels:
+      "application/json": "AuthRequest"
+    methodResponses:
+      - statusCode: 200
+        responseBody:
+          description: "Sign up response body"
+        responseModels:
+          "application/json": "AuthResponse"
+      - statusCode: 401
+        responseBody:
+          description: "Request body is invalid"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 409
+        responseBody:
+          description: "User with this email already exists"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 500
+        responseBody:
+          description: "Internal server error"
+        responseModels:
+          "application/json": "ErrorResponse"
+
+  authSignIn:
+    summary: "Sign in"
+    description: "Sign in function, which returns access and refresh tokens"
+    requestBody:
+      description: "Sign in request body"
+      required: true
+    requestModels:
+      "application/json": "AuthRequest"
+    methodResponses:
+      - statusCode: 200
+        responseBody:
+          description: "Sign in response body"
+        responseModels:
+          "application/json": "AuthResponse"
+      - statusCode: 401
+        responseBody:
+          description: "Request body or credentials are invalid"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 500
+        responseBody:
+          description: "Internal server error"
+        responseModels:
+          "application/json": "ErrorResponse"
+
+  linksPut:
+    summary: "Shorten URL"
+    description: "Shorten URL function, which creates a new link and returns link id, origin and short link"
+    security:
+      - jwtAuthorizer: []
+    requestBody:
+      description: "Shorten URL request body"
+      required: true
+    requestModels:
+      "application/json": "ShortenRequest"
+    methodResponses:
+      - statusCode: 200
+        responseBody:
+          description: "Shorten URL response body"
+        responseModels:
+          "application/json": "ShortenResponse"
+      - statusCode: 403
+        responseBody:
+          description: "Forbidden"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 422
+        responseBody:
+          description: "Request body is invalid"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 500
+        responseBody:
+          description: "Internal server error"
+        responseModels:
+          "application/json": "ErrorResponse"
+
+# Redirection is not a valid OpenAPI operation (since the rule that every operation must have a 200 response is violated)
+# And analogs of this app never include redirection in their API documentation, so I decided to omit it
+#
+#  linksRedirect:
+#    summary: "Redirect to original URL"
+#    description: "Redirect to original URL function, which redirects to original URL"
+#    pathParams:
+#      - name: "id"
+#        description: "Id of a previously shortened link"
+#        required: true
+#        schema:
+#          type: "string"
+#    methodResponses:
+#      - statusCode: 302
+#        description: "Redirect to original URL"
+#        responseBody:
+#            description: "Original URL response body"
+#        responseModels: {}
+#        headers:
+#          Location:
+#            description: "Original URL"
+#            type: "string"
+#            example: "https://www.example.com/"
+#      - statusCode: 404
+#        responseBody:
+#          description: "Link not found"
+#        responseModels:
+#          "application/json": "ErrorResponse"
+#      - statusCode: 500
+#        responseBody:
+#          description: "Internal server error"
+#        responseModels:
+#          "application/json": "ErrorResponse"
+
+  linksList:
+    summary: "Get the list of your links"
+    description: "Get all links function, which returns all links the user has created"
+    security:
+      - jwtAuthorizer: []
+    methodResponses:
+      - statusCode: 200
+        responseBody:
+          description: "Get all links response body"
+        responseModels:
+          "application/json": "GetLinksResponse"
+      - statusCode: 403
+        responseBody:
+          description: "Forbidden"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 500
+        responseBody:
+          description: "Internal server error"
+        responseModels:
+          "application/json": "ErrorResponse"
+
+  linksDeactivate:
+    summary: "Deactivate link"
+    description: "Deactivate link function, which deactivates a link you have created"
+    security:
+      - jwtAuthorizer: []
+    pathParams:
+      - name: "id"
+        description: "Id of a previously shortened link"
+        required: true
+        schema:
+          type: "string"
+    methodResponses:
+      - statusCode: 200
+        responseBody:
+          description: "Deactivate link response body"
+        responseModels:
+          "application/json": "DeactivateLinkResponse"
+      - statusCode: 403
+        responseBody:
+          description: "Forbidden"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 404
+        responseBody:
+          description: "Link not found"
+        responseModels:
+          "application/json": "ErrorResponse"
+      - statusCode: 500
+        responseBody:
+          description: "Internal server error"
+        responseModels:
+          "application/json": "ErrorResponse"

@@ -29,6 +29,7 @@
     "@types/uuid": "^9.0.7",
     "esbuild": "^0.19.5",
     "serverless-esbuild": "^1.48.5",
+    "serverless-openapi-documenter": "^0.0.90",
     "tslint": "^5.5.0",
     "tslint-config-standard": "^6.0.1",
     "typescript": "^2.4.2"
