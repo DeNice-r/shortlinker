@@ -19,6 +19,12 @@ custom:
     sourcemap: true
     target: node18
 
+package:
+  individually: true
+  exclude:
+    - node_modules/**
+    - .gitignore
+    - .git/**
 
 provider:
   name: aws
